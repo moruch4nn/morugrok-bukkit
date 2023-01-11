@@ -15,7 +15,7 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
-    implementation(files("libs/morugrok.jar"))
+    implementation(files("libs/morugrok-all.jar"))
     compileOnly("org.spigotmc:spigot-api:1.19.3-R0.1-SNAPSHOT")
 }
 
