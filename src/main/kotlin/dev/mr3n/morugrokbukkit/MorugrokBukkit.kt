@@ -14,24 +14,40 @@ class MorugrokBukkit: JavaPlugin() {
     private var isRunning = true
 
     override fun onEnable() {
+        saveDefaultConfig()
         // サーバー情報
         val server = Bukkit.getServer()
-        // サーバーのポート。めんどくさいので公開ポートも同じにする。
-        val port = server.port
-        // morugrokのコネクションの識別名。別にnullでもいいけど仕様変更するかもしれないので一応ない場合は"NO NAME"にする。
-        val name = System.getenv("MORUGROK_NAME")?:"NO NAME"
-        // morugrokのtoken
-        val token = System.getenv("MORUGROK_TOKEN")
+        val port: Int
+        val name: String
+        val token: String
+        val maxFailures = config.getInt("max_failures", 20)
+        if(config.getBoolean("use_env")) {
+            port = System.getenv("MORUGROK_SERVER_NAME")?.toIntOrNull()?:server.port
+            name = System.getenv("MORUGROK_SERVER_NAME")?:"NO NAME"
+            token = System.getenv("MORUGROK_TOKEN")
+        } else {
+            port = config.getInt("port", server.port)
+            name = config.getString("name")?:"NO NAME"
+            token = config.getString("token")?:throw IllegalArgumentException("TOKEN情報を正しく設定してください。")
+        }
+        var countFailed = 0
         // websocketはスレッドを止めるから別スレッドで。
         morugrokThread = thread {
             // プラグインの実行中は何度切断されても再接続する。
             while(isRunning) {
-                // morugrokに接続する
-                try { runBlocking { Morugrok.start("localhost", port, port, name, token, logger) } } catch(_: Exception) {}
-                // Q.なぜ30秒？ A.websocketのタイムアウトが15秒だから。(最大まで判定に29.999...秒かかる。)
-                logger.info("MORUGROKとの接続が切断されたため30秒後に再接続を試みます。")
-                // こっそり31秒後に再試行
-                Thread.sleep(1000 * 31)
+                try { runBlocking {
+                    Morugrok.start("localhost", port, port, name, token, logger) {
+                        logger.info("morugrokとのコネクションを確立しました: 試行回数は${countFailed}回(${countFailed * 5}秒)でした")
+                        countFailed = 0
+                    }
+                } } catch(_: Exception) { }
+                if(countFailed > maxFailures) {
+                    logger.warning("morugrokへのの接続失敗回数が、最大試行回数(${maxFailures})に達したため接続を停止しました。最大試行回数はconfig.ymlの`max_failures`で変更可能です。")
+                    break
+                }
+                countFailed++
+                logger.info("MORUGROKとの接続が切断されたため5秒後に再接続を試みます: ${countFailed}回目の試行//平均1.6回(8秒)の試行で再接続します")
+                Thread.sleep(1000 * 5)
             }
         }
     }
