@@ -5,7 +5,3 @@
 ### config.ymlで設定する
 環境変数ではなくconfig.ymlから取得する場合はconfig.yml内の`use_env`をfalseに変更してください。<br>
 その後config.yml内の`token` `port` `name`を設定してください。
-
-<br>
-Q.なんで自作してるの？<br>
-A. 毎回IP変わるのめんどくさかったから。複数のサーバーを開放したいから。公開しているサービスでも使用したかったから。
