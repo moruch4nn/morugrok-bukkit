@@ -1,5 +1,6 @@
 #configではなく環境変数から設定情報を取得します。これはdocker向けの設定です。
 #MORUGROK_TOKEN(必須): morugrokのtoken情報
+#MORUGROK_MAX_FAILURES(任意): 最大試行回数
 #MORUGROK_NAME(任意): morugrokに接続する際に登録するサーバー名(LOBBY,WEREWOLF,PARKOURなど...)
 #MORUGROK_PORT(任意): morugrokで公開するポート。例: 20051->morugrok.mr3n.dev:20051
 use_env: true
